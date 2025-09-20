@@ -3,10 +3,6 @@ import axios from 'axios';
 import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
 
-
-import * as mpFaceMesh from '@mediapipe/face_mesh';
-import * as mpCamera from '@mediapipe/camera_utils';
-
 const API_URL = 'https://proctoring-backend-2f1w.onrender.com/api/logs';
 
 function Proctoring({ candidateName, onShowReport }) {
@@ -36,8 +32,8 @@ function Proctoring({ candidateName, onShowReport }) {
 
       const objectModel = await cocoSsd.load();
 
-      
-      const faceMesh = new mpFaceMesh.FaceMesh({
+      // ✅ Use global FaceMesh (from CDN)
+      const faceMesh = new window.FaceMesh({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
       });
 
@@ -47,15 +43,15 @@ function Proctoring({ candidateName, onShowReport }) {
         minDetectionConfidence: 0.5,
         minTrackingConfidence: 0.5,
       });
-      
+
       setLoading(false);
 
       if (navigator.mediaDevices && navigator.mediaDevices.getUserMedia) {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         videoRef.current.srcObject = stream;
-        
-        
-        const camera = new mpCamera.Camera(videoRef.current, {
+
+        // ✅ Use global Camera (from CDN)
+        const camera = new window.Camera(videoRef.current, {
           onFrame: async () => {
             if (videoRef.current && canvasRef.current) {
               await faceMesh.send({ image: videoRef.current });
@@ -70,7 +66,7 @@ function Proctoring({ candidateName, onShowReport }) {
 
       faceMesh.onResults(onResults);
     };
-    
+
     const calculateEAR = (eye) => {
       const p1_p5 = Math.hypot(eye[1].x - eye[4].x, eye[1].y - eye[4].y);
       const p2_p4 = Math.hypot(eye[2].x - eye[3].x, eye[2].y - eye[3].y);
@@ -89,7 +85,7 @@ function Proctoring({ candidateName, onShowReport }) {
         }
       }
     };
-    
+
     const onResults = (results) => {
       if (!results.multiFaceLandmarks || results.multiFaceLandmarks.length === 0) {
         if (!noFaceTimer.current) {
@@ -121,7 +117,7 @@ function Proctoring({ candidateName, onShowReport }) {
         clearTimeout(lookingAwayTimer.current);
         lookingAwayTimer.current = null;
       }
-      
+
       const leftEyeIndices = [33, 160, 158, 133, 153, 144];
       const rightEyeIndices = [362, 385, 387, 263, 373, 380];
       const leftEye = leftEyeIndices.map(i => landmarks[i]);
@@ -147,10 +143,12 @@ function Proctoring({ candidateName, onShowReport }) {
   return (
     <div className="min-h-screen bg-gray-900 flex flex-col items-center justify-center p-4">
       <h1 className="text-3xl font-bold mb-4">Interview in Progress</h1>
-      <p className="text-lg text-gray-400 mb-6">Candidate: <span className="font-semibold text-white">{candidateName}</span></p>
+      <p className="text-lg text-gray-400 mb-6">
+        Candidate: <span className="font-semibold text-white">{candidateName}</span>
+      </p>
 
       {loading && <div className="text-xl">Loading AI Models... Please Wait.</div>}
-      
+
       <div className="relative w-full max-w-2xl mx-auto">
         <video ref={videoRef} autoPlay playsInline muted className="w-full h-auto rounded-lg shadow-lg"></video>
         <canvas ref={canvasRef} className="absolute top-0 left-0 w-full h-full"></canvas>
@@ -161,15 +159,18 @@ function Proctoring({ candidateName, onShowReport }) {
           <h2 className="text-xl font-semibold mb-2 text-red-400">🚨 Live Alerts</h2>
           <ul className="text-gray-300">
             {alerts.length > 0 ? alerts.map((alert, index) => (
-              <li key={index} className="border-b border-gray-700 py-1">{`[${alert.timestamp}] ${alert.event}`}</li>
+              <li key={index} className="border-b border-gray-700 py-1">
+                {`[${alert.timestamp}] ${alert.event}`}
+              </li>
             )) : <p>No alerts yet. System is monitoring.</p>}
           </ul>
         </div>
       </div>
-      
-      <button 
-        onClick={onShowReport} 
-        className="mt-8 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-md transition-colors">
+
+      <button
+        onClick={onShowReport}
+        className="mt-8 bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded-md transition-colors"
+      >
         Finish Interview & View Report
       </button>
     </div>
