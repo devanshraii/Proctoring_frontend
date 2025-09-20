@@ -5,7 +5,7 @@ import * as cocoSsd from '@tensorflow-models/coco-ssd';
 import { FaceMesh } from '@mediapipe/face_mesh';
 import { Camera } from '@mediapipe/camera_utils';
 
-const API_URL = 'http://localhost:5001/api/logs';
+const API_URL = 'https://proctoring-backend-2f1w.onrender.com/api/logs';
 
 function Proctoring({ candidateName, onShowReport }) {
   const videoRef = useRef(null);
