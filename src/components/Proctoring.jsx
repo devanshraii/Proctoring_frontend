@@ -2,8 +2,10 @@ import React, { useRef, useEffect, useState, useCallback } from 'react';
 import axios from 'axios';
 import * as tf from '@tensorflow/tfjs';
 import * as cocoSsd from '@tensorflow-models/coco-ssd';
-import { FaceMesh } from '@mediapipe/face_mesh';
-import { Camera } from '@mediapipe/camera_utils';
+
+
+import * as mpFaceMesh from '@mediapipe/face_mesh';
+import * as mpCamera from '@mediapipe/camera_utils';
 
 const API_URL = 'https://proctoring-backend-2f1w.onrender.com/api/logs';
 
@@ -33,7 +35,9 @@ function Proctoring({ candidateName, onShowReport }) {
       await tf.ready();
 
       const objectModel = await cocoSsd.load();
-      const faceMesh = new FaceMesh({
+
+      
+      const faceMesh = new mpFaceMesh.FaceMesh({
         locateFile: (file) => `https://cdn.jsdelivr.net/npm/@mediapipe/face_mesh/${file}`,
       });
 
@@ -50,7 +54,8 @@ function Proctoring({ candidateName, onShowReport }) {
         const stream = await navigator.mediaDevices.getUserMedia({ video: true });
         videoRef.current.srcObject = stream;
         
-        const camera = new Camera(videoRef.current, {
+        
+        const camera = new mpCamera.Camera(videoRef.current, {
           onFrame: async () => {
             if (videoRef.current && canvasRef.current) {
               await faceMesh.send({ image: videoRef.current });
